@@ -24,6 +24,16 @@ int gendervalid(int gender){
 int ipkvalid(float ipk){
     return ipk >= 0.00 && ipk <= 4.00;
 }
+int nrpexist(const char *nrp){
+    mhs * curr = head;
+    while (curr != NULL){
+        if(strcmp(curr->NRP, nrp) == 0){
+            return 1;
+        }
+        curr = curr->next;
+    }
+    return 0;
+}
 void savefile(const char * file){
     FILE *fp = fopen(file, "w+b");
     if (!fp){
@@ -90,7 +100,10 @@ void AddData(){
     if (!nrpvalid(baru->NRP)){
         printf("NRP tidak valid! Harus terdiri dari 10 digit angka\n");
     }
-    } while (!nrpvalid(baru->NRP));
+    else if(nrpexist(baru->NRP)){
+        printf("NRP tidak valid! NRP ini sudah ada di database!\n");
+    }
+    } while (!nrpvalid(baru->NRP) || nrpexist(baru->NRP));
     getchar();
 
     printf("Nama: ");
