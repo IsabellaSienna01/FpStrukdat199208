@@ -34,10 +34,14 @@ int nrpexist(const char *nrp){
     }
     return 0;
 }
+int comparenrp(const void * a, const void * b){
+    mhs *ma = *(mhs**)a;
+    mhs *mb = *(mhs**)b;
+    return strcmp(ma->NRP, mb->NRP);
+}
 void savefile(const char * file){
-    FILE *fp = fopen(file, "w+b");
+    FILE *fp = fopen(file, "wb");
     if (!fp){
-        perror("Gagal membuka file");
         return;
     }
     mhs * curr = head;
@@ -89,6 +93,8 @@ void AddData(){
     mhs * baru = (mhs *) malloc(sizeof(mhs));
     if (!baru){
         printf("Gagal alokasi memori\n");
+        printf("Tekan tombol apa saja untuk kembali ke menu...\n");
+        _getch();
         return;
     }
     printf("-----------------------------------------------------------\n");
@@ -148,9 +154,16 @@ void AddData(){
 void ChangeData(){
     mhs * curr = head;
     printf("-----------------------------------------------------------\n");
-    printf("Masukkan NRP: ");
+    
     char nrp[11];
-    scanf("%10s", nrp);
+    
+    do{
+        printf("Masukkan NRP: ");
+        scanf("%10s", nrp);
+        if (!nrpvalid(nrp)){
+            printf("NRP tidak valid! Harus terdiri dari 10 digit angka\n");
+        }
+    } while (!nrpvalid(nrp));
 
     while (curr != NULL){
         int input;
@@ -205,13 +218,21 @@ void ChangeData(){
             }
             else if (input == 4){
                 printf("Tidak ada perubahan yang dilakukan\n");
+                printf("Tekan tombol apa saja untuk kembali ke menu...\n");
+                _getch();
+                return;
             }
             else{
                 printf("Data yang ingin diubah tidak valid!\n");
+                printf("Tekan tombol apa saja untuk kembali ke menu...\n");
+                _getch();
+                return;
             }
 
             if (flag){
             savefile("dbmhs.dat");
+            printf("Tekan tombol apa saja untuk kembali ke menu...\n");
+            _getch();
             }
             return;
         }
@@ -223,7 +244,42 @@ void ChangeData(){
 }
 void PrintDataIdx(){ 
     printf("-----------------------------------------------------------\n");
-//print data with index (sort NRP)
+    if (head == NULL || data.count == 0){
+        printf("Tidak ada data\n");
+        printf("Tekan tombol apa saja untuk kembali ke menu...\n");
+        _getch();
+        return;
+    }
+    mhs ** list = (mhs **) malloc(data.count * sizeof(mhs *));
+
+    if (!list){
+        printf("Gagal alokasi memori\n");
+        printf("Tekan tombol apa saja untuk kembali ke menu...\n");
+        _getch();
+        return;
+    }
+
+    mhs * curr = head;
+    int idx = 0; 
+    float total = 0;
+    while (curr != NULL && idx < data.count){
+        list[idx++] = curr;
+        curr = curr->next;
+    }
+
+    qsort(list, data.count, sizeof(mhs *), comparenrp);
+
+    printf("Data mahasiswa: \n");
+    for (int j = 0; j<data.count; j++){
+        printf("%2d. NRP: %s\n", j+1, list[j]->NRP);
+        printf("    Nama : %s\n", list[j]->Nama);
+        printf("    Gender: %s\n", list[j]->gender ? "Laki-laki" : "Perempuan");
+        printf("    IPK: %.2f\n\n", list[j]->IPK);
+        total += list[j]->IPK;
+    }
+
+    printf("Rata-rata IPK: %.2f\n", total/data.count);
+    free(list);
     printf("Tekan tombol apa saja untuk kembali ke menu...\n");
    _getch();
 }
@@ -255,7 +311,51 @@ void PrintData(){
 }
 void DeleteData(){
     printf("-----------------------------------------------------------\n");
-//jangan lupa data.count--;
+    if (head == NULL || data.count == 0){
+        printf("Tidak ada data untuk dihapus\n");
+        printf("Tekan tombol apa saja untuk kembali ke menu...\n");
+        _getch();
+        return;
+    }
+    char nrp[11];
+
+    do{
+        printf("Masukkan NRP yang ingin dihapus: ");
+        scanf("%10s", nrp);
+        if (!nrpvalid(nrp)){
+            printf("NRP tidak valid! Harus terdiri dari 10 digit angka\n");
+        }
+    } while(!nrpvalid(nrp));
+
+    mhs * curr = head;
+    while (curr != NULL){
+        if (strcmp(curr->NRP, nrp) == 0){
+            if (curr == head){
+                head = curr->next;
+                if (head != NULL){
+                    head->prev = NULL;
+                }
+            }
+            else{
+                if (curr->prev != NULL){
+                    curr->prev->next = curr->next;
+                }
+                if (curr->next != NULL){
+                    curr->next->prev = curr->prev;
+                }
+            }
+            free(curr);
+            data.count--;
+
+            savefile("dbmhs.dat");
+            printf("Data dengan NRP %s berhasil dihapus!\n", nrp);
+             printf("Tekan tombol apa saja untuk kembali ke menu...\n");
+            _getch();
+            return;
+        }
+        curr = curr->next;
+    }
+    printf("NRP tidak ditemukan!\n");
     printf("Tekan tombol apa saja untuk kembali ke menu...\n");
    _getch();
 }
